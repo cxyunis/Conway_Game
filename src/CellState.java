@@ -1,2 +1,3 @@
-package PACKAGE_NAME;public class CellState {
+public enum CellState {
+    ALIVE, DEAD;
 }

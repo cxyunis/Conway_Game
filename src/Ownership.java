@@ -1,2 +1,3 @@
-package PACKAGE_NAME;public class Ownership {
+public enum Ownership {
+    NONE, PLAYER1, PLAYER2;
 }

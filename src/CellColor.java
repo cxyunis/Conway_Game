@@ -1,10 +1,10 @@
 import javafx.scene.paint.Color;
 
 public enum CellColor {
-    BLACK, BLUE, GREEN, INDIGO, ORANGE, RED, VIOLET, YELLOW;
+    GREY, BLUE, GREEN, INDIGO, ORANGE, RED, VIOLET, YELLOW, CYAN;
 
-    private Color[] color = {Color.BLACK, Color.BLUE, Color.GREEN, Color.INDIGO,
-                             Color.ORANGE, Color.RED, Color.VIOLET, Color.YELLOW};
+    private Color[] color = {Color.GREY, Color.BLUE, Color.GREEN, Color.INDIGO,
+            Color.ORANGE, Color.RED, Color.VIOLET, Color.YELLOW, Color.CYAN};
     public Color getColor() {
         return this.color[this.ordinal()];
     }
