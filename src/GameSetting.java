@@ -10,7 +10,7 @@ import javafx.scene.paint.Color;
 public class GameSetting {
     private String[] playerName = new String[2];
     private CellColor[] cellColor = new CellColor[2];
-
+    private Color boardColor = Color.LIGHTPINK;
     private int[] generation = {0,0};
     private int gridSize = 10;  // game board dimension (e.g. default: 10x10)
     private String platform;    // either GUI/Terminal
@@ -20,7 +20,7 @@ public class GameSetting {
     public static GameSetting instance() { return INSTANCE; }
     public void setPlayerName(int playerNo, String name) { playerName[playerNo-1] = name; }
     public void setPlayerChosenColor(int playerNo, CellColor pColor) { cellColor[playerNo-1] = pColor; }    //for GUI
-    public void increasePlayerGeneration(int playerNo) { generation[playerNo-1]++; }
+    public void increasePlayerGeneration(int playerNo) { generation[playerNo-1]++; }    // switch to next player too
     public void setGridSize(int size) { gridSize = size; }
     public void setPlatform(String platform) { this.platform = platform; }
 
@@ -36,11 +36,18 @@ public class GameSetting {
         cellColor[0] = cellColor[1];
         cellColor[1] = p;
     }
-
-
     public String getPlayerName(int playerNo) { return playerName[playerNo-1]; }
     public Color getPlayerColor(int playerNo) { return cellColor[playerNo-1].getColor(); }
     public int getPlayerGeneration(int playerNo) { return generation[playerNo-1]; }
+    public int getPlayerTurn() {
+        // related to generation
+        if (generation[0]==generation[1]) {
+            return 2;
+        } else {
+            return 1;
+        }
+    }
     public int getGridSize() { return gridSize; }
     public String getPlatform() { return platform; }
+    public Color getBoardColor() { return boardColor; }
 }

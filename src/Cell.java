@@ -12,6 +12,7 @@ public class Cell {
         this.cellOwner = cellOwner;
     }
     public void setCellOwner(Ownership cellOwner) { this.cellOwner = cellOwner; }
+    public void setCellState(CellState cellState) { this.cellState = cellState; };
     public CellState getCellState() { return cellState; }
     public Ownership getCellOwner() { return cellOwner; }
 }

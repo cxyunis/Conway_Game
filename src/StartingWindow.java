@@ -43,13 +43,13 @@ public class StartingWindow extends Application {
 
         // player 1
         Label lblPlayer1Name = new Label("Player 1 Name");
-        TextField txtPlayer1Name = new TextField("Haru");   //"Enter Player 1 Name"
+        TextField txtPlayer1Name = new TextField("Player 1");   //"Enter Player 1 Name"
         Label lblPlayer1Preference = new Label("Player 1 Preference Color/Symbol");
         Button btnSelectID1 = selectPreferColor(1);
 
         // player 2
         Label lblPlayer2Name = new Label("Player 2 Name");
-        TextField txtPlayer2Name = new TextField("Bora");   //"Enter Player 2 Name"
+        TextField txtPlayer2Name = new TextField("Player 2");   //"Enter Player 2 Name"
         Label lblPlayer2Preference = new Label("Player 2 Preference Color/Symbol");
         Button btnSelectID2 = selectPreferColor(2);
 

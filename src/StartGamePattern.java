@@ -23,8 +23,24 @@ public class StartGamePattern {
             add(h);
         }
     };
-
     public static Cell[][] getRandomPattern(int playerNo) {
+        Random rnd = new Random();
+        Cell[][] aPattern = new Cell[3][3];
+        Ownership owner = Ownership.valueOf("PLAYER"+playerNo);
+        for (int i=0; i<3; i++) {
+            for (int j=0; j<3; j++) {
+                int r = rnd.nextInt(2);
+                if (r==0) {
+                    aPattern[i][j] = new Cell(CellState.DEAD, Ownership.NONE);
+                } else {
+                    aPattern[i][j] = new Cell(CellState.ALIVE, owner);
+                }
+            }
+        }
+        return aPattern;
+    }
+
+    public static Cell[][] getPredefinedPattern(int playerNo) {
         // represents sets of pattern (2x2, 2x3, 3x2 or 3x3) stored in ArrayList
         // to get a random initial pattern, just supply a random int in [0,1,...,8,9]
         Cell[][] aPattern = new Cell[3][3];
