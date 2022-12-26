@@ -15,7 +15,11 @@ public class GameSetting {
     private int gridSize = 10;  // game board dimension (e.g. default: 10x10)
     private String platform;    // either GUI/Terminal
     private static final GameSetting INSTANCE = new GameSetting();
-    private GameSetting() {}
+    private GameSetting() {
+        // default color for players
+        cellColor[0] = CellColor.BLUE;
+        cellColor[1] = CellColor.RED;
+    }
 
     public static GameSetting instance() { return INSTANCE; }
     public void setPlayerName(int playerNo, String name) { playerName[playerNo-1] = name; }

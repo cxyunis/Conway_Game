@@ -19,8 +19,8 @@ import static java.lang.Math.max;
 
 public class GUIBased extends Application {
 
-    Rectangle[][] rect;
-    private static int gSize = 20;  // grid (individual cell) = width =height
+    //Rectangle[][] rect;
+    private static int gSize = 20;  // grid (individual cell) = width = height
     private static final int LPAD = 20;
     private static final int RPAD = 20;
     private static final int TPAD = 140;
@@ -31,7 +31,7 @@ public class GUIBased extends Application {
     private Label[] lblPopulation = new Label[2];
 
     private  Rectangle[][] grids;
-    Label lblPlayerTurn; // = new Label();
+    private Label lblPlayerTurn; // = new Label();
     private List<GameBoardObserver> aObservers = new ArrayList<>();
 
     public void start(Stage stage) {
@@ -70,19 +70,19 @@ public class GUIBased extends Application {
         for (int i=0; i<3; i++) {
             for (int j=0; j<3; j++) {
                 if (cells[i][j].getCellState().equals(CellState.ALIVE)) {
-                    rect[startPosX + i][startPosY + j].setFill(c);
+                    grids[startPosX + i][startPosY + j].setFill(c);
                 }
             }
         }
     }
     public void refreshEmptyCellUpdateOnGameBoard(int x, int y) {
-        rect[x][y].setFill(GameSetting.instance().getBoardColor());
+        grids[x][y].setFill(GameSetting.instance().getBoardColor());
     }
     public void refreshSpringToLiveOnGameBoard(int playerNo, int x, int y) {
-        rect[x][y].setFill(GameSetting.instance().getPlayerColor(playerNo));
+        grids[x][y].setFill(GameSetting.instance().getPlayerColor(playerNo));
     }
     public void refreshPopulation(int playerNo, int population) {
-        lblPopulation[playerNo-1].setText("Population "+population);
+        lblPopulation[playerNo-1].setText("Population: "+population);
     }
     private Scene createScene() {
         Group root = new Group();
@@ -103,10 +103,9 @@ public class GUIBased extends Application {
 
             root.getChildren().addAll(lblPName[i],crcPColor[i],lblGeneration[i],lblPopulation[i]);
         }
-        lblPlayerTurn = constructPlayerTurnLabel(1,0,80,10);
-        root.getChildren().addAll(lblPlayerTurn);
-        Label note = constructMouseClickNote(0,120,10);
-        root.getChildren().addAll(note);
+        Label note = constructMouseClickNote(0,80,10);
+        lblPlayerTurn = constructPlayerTurnLabel(1,0,120,10);
+        root.getChildren().addAll(note, lblPlayerTurn);
 
 
         // noOfGrid*gSize gives total length of grid w/o gap, and 2nd gSize
@@ -176,14 +175,15 @@ public class GUIBased extends Application {
         lblPlayerName.setPadding(new Insets(padding,padding,padding,padding));
         return lblPlayerName;
     }
-    private int getCellXIndex(double x) { return (int) ((x-LPAD)/(gSize+1)); }
+    private double getCellXIndex(double x) { return ((x-LPAD)/(gSize+1)); }
     private int getCellX(int index) { return index+LPAD+index*gSize; }
-    private int getCellYIndex(double y) { return (int) ((y-TPAD-30)/(gSize+1)); }
+    private double getCellYIndex(double y) { return ((y-TPAD-30)/(gSize+1)); }
     private int getCellY(int index) { return index+30+TPAD+index*gSize; }
 
     private Rectangle[][] createGrid() {
         int noOfGrid = GameSetting.instance().getGridSize();
-        rect = new Rectangle[noOfGrid][noOfGrid];
+        //Rectangle[][] rect;
+        Rectangle[][] rect = new Rectangle[noOfGrid][noOfGrid];
         for (int i=0; i<noOfGrid; i++) {
             for (int j=0; j<noOfGrid; j++) {
                 rect[i][j] = new Rectangle();            //instantiating Rectangle
@@ -199,8 +199,8 @@ public class GUIBased extends Application {
                         Rectangle lRect = (Rectangle) e.getSource();
                         double x = lRect.getX();
                         double y = lRect.getY();
-                        int i = getCellXIndex(x);
-                        int j = getCellYIndex(y);
+                        int i = (int) getCellXIndex(x);
+                        int j = (int) getCellYIndex(y);
 
                         MouseButton btn = e.getButton();
                         if (btn==MouseButton.PRIMARY) {

@@ -4,23 +4,20 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
+import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 
 public class StartingWindow extends Application {
     /*
-    * GUI based settings for the game
-    * Obtained settings from players
-    * */
+     * GUI based settings for the game
+     * Obtained settings from players
+     * */
     @Override
     public void start(Stage stage) {
         // deciding whether to play in GUI or terminal
         decidePlatform(stage);  //<1>
     }
-
-//    private void getColor(int playerNo) {
-//        Stage s = new Stage();
-//    }
 
     private Button selectPreferColor(int playerNo) {
         // call color palette for each player to choose color
@@ -45,13 +42,17 @@ public class StartingWindow extends Application {
         Label lblPlayer1Name = new Label("Player 1 Name");
         TextField txtPlayer1Name = new TextField("Player 1");   //"Enter Player 1 Name"
         Label lblPlayer1Preference = new Label("Player 1 Preference Color/Symbol");
+        Color defaultPlayer1Color = GameSetting.instance().getPlayerColor(1);
         Button btnSelectID1 = selectPreferColor(1);
+        btnSelectID1.setTextFill(defaultPlayer1Color);
 
         // player 2
         Label lblPlayer2Name = new Label("Player 2 Name");
         TextField txtPlayer2Name = new TextField("Player 2");   //"Enter Player 2 Name"
         Label lblPlayer2Preference = new Label("Player 2 Preference Color/Symbol");
+        Color defaultPlayer2Color = GameSetting.instance().getPlayerColor(2);
         Button btnSelectID2 = selectPreferColor(2);
+        btnSelectID2.setTextFill(defaultPlayer2Color);
 
         // grid dimension
         Label lblGridSize = new Label("Set Grid Size");
@@ -110,12 +111,14 @@ public class StartingWindow extends Application {
             String platform = option.getText();
             GameSetting.instance().setPlatform(platform);
             stage.close();
-            //if (platform.equals("GUI")) {
-            getGUISetting(stage);   //<2>
-            //} else {
-            //    getTerminalSetting();
-            //}
+            if (platform.equals("GUI")) {
+                getGUISetting(stage);   //<2>
+            } else {
+                TerminalBased tb = new TerminalBased(); // then pass to GameModel
+                tb.getTerminalSetting();
+            }
         });
+        rbGUI.setSelected(true);
         GridPane gridPane = new GridPane();
         gridPane.setMinSize(100, 100);
         gridPane.setPadding(new Insets(10, 10, 10, 10));
