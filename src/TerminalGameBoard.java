@@ -1,13 +1,13 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class TerminalBased {
+public class TerminalGameBoard {
     /*
      * Terminal Based class is to mimic the behaviors of GUI such that it does the same functionality as GUI.
      * most, if not all, of the behaviors will be called by GameModel
      * */
     private List<GameBoardObserver> aObservers = new ArrayList<>();
-    public TerminalBased() {
+    public TerminalGameBoard() {
         System.out.println("Terminal Based Game");
         start();
     }
@@ -32,15 +32,12 @@ public class TerminalBased {
         System.out.println("> Show player 2 updated statistics for this generation");
         System.out.println("> If it is game over, exit loop");
     }
-
     public void registerObserver(GameBoardObserver pObserver) {
         aObservers.add(pObserver);
     }
-
     public void getTerminalSetting() {
         // get setting from players in terminal based
     }
-
     public void displayBoard() {
         // display board with symbol
     }

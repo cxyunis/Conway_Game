@@ -1,3 +1,3 @@
 public interface GameBoardObserver {
-    void cellSelected(int x, int y, String action);
+    void cellSelected(int row, int col, String action);
 }

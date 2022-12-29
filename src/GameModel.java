@@ -1,3 +1,4 @@
+import javafx.application.Application;
 import javafx.scene.control.Alert;
 import javafx.stage.Stage;
 
@@ -16,12 +17,14 @@ public class GameModel implements GameBoardObserver {
      * */
     private int playerTurn = 1;     // shall I move this to GameSetting???
     private Cell[][] gameBoard;
-    private GUIBased gui;
+    private GUIGameBoard gui;
     private boolean livePlayed = false;    //
     private boolean deadPlayed = false;
     private boolean gameOver = false;
     private int winner = 0;
-
+    public static void main(String[] args) {
+        Application.launch(StartingWindow.class, args);
+    }
     public GameModel() {
         // sort player to decide who start first
         sortPlayerInAlphabeticalOrder();    //<4>
@@ -30,15 +33,16 @@ public class GameModel implements GameBoardObserver {
     }
     private void sortPlayerInAlphabeticalOrder() {
         // to meet game requirement that the game controller to sort the player according to alphabetical order
-        // once sorted, the staring player in GameSetting will change according to alphabetical order
-        List<String> user = new ArrayList<>(2);
-        user.add(GameSetting.instance().getPlayerName(1));
-        user.add(GameSetting.instance().getPlayerName(2));
+        // once sorted, the starting player in GameSetting will change according to alphabetical order, including
+        // their settings will be reassigned accordingly
         String p1name = GameSetting.instance().getPlayerName(1);
+
+        List<String> user = new ArrayList<>(2);
+        user.add(new String(GameSetting.instance().getPlayerName(1)));
+        user.add(new String(GameSetting.instance().getPlayerName(2)));
         Collections.sort(user);
         if (!p1name.equals(user.get(0))) {
             GameSetting.instance().swapPlayerPlayingOrder();
-            GameSetting.instance().swapPlayerColor();
         }
     }
 
@@ -46,56 +50,58 @@ public class GameModel implements GameBoardObserver {
         // call back from SettingWindow after players selected the preference
         if (GameSetting.instance().getPlatform().equals("GUI")) {
             Stage stage = new Stage();
-            gui = new GUIBased();
+            gui = new GUIGameBoard();
             gui.registerObserver(this);
             gui.start(stage);   //<e>.<6>
 
-            initializeGameBoard();  // initialize game board
-            setInitialPattern(); // fill with initial pattern to start the game with
+            initializeGameBoard();  // initialize game board (MAY NEED TO CHANGE TO GAMEBOARD class
+            setInitialPattern();    // fill with initial pattern to start the game with
             updatePlayerPopulation();
-            GameSetting.instance().increasePlayerGeneration(playerTurn);
-            gui.refreshPlayerGeneration(playerTurn);
+            updatePlayerGeneration(gui);
             checkForGameOver();
         } else {
-            TerminalBased tbGame = new TerminalBased();
+            TerminalGameBoard tbGame = new TerminalGameBoard();
             tbGame.start();
         }
     }
     private void initializeGameBoard() {
         int gbSize = GameSetting.instance().getGridSize();
         gameBoard = new Cell[gbSize][gbSize];
-        for (int i=0; i<gbSize; i++) {
-            for (int j=0; j<gbSize; j++) {
-                gameBoard[i][j] = new Cell(CellState.DEAD, Ownership.NONE);
+        for (int r=0; r<gbSize; r++) {
+            for (int c=0; c<gbSize; c++) {
+                gameBoard[r][c] = new Cell(CellState.DEAD, Ownership.NONE);
             }
         }
     }
     private void setInitialPattern() {
-        Cell[][] p1 = StartGamePattern.getRandomPattern(1);
-        int x1 = getRandomPositionOnBoard();
-        int y1 = getRandomPositionOnBoard();
-        fillGameBoard(x1,y1,p1);      // local array to hold the game board status
-        gui.showInitialPattern(1,x1,y1,p1); // show on GUI
-        boolean overlap = true;
-        int x2 = 0;
-        int y2 = 0;
-        Cell[][] p2 = new Cell[3][3];
-        while(overlap) {    // ensure no overlap with another player
-            x2 = getRandomPositionOnBoard();
-            y2 = getRandomPositionOnBoard();
-            p2 = StartGamePattern.getRandomPattern(2);
-            overlap = isOverlap(x2,y2,p2);
-        }
-        fillGameBoard(x2,y2,p2);      // local array to hold the game board status
+        Cell[][] p1 = GameSetting.instance().getPlayerChosenInitialPattern(1);
+        int size = p1.length;
+        int r1 = getRandomPositionOnBoard();
+        int c1 = getRandomPositionOnBoard();
+        fillGameBoard(r1,c1,p1);      // local array to hold the game board status
 
-        gui.showInitialPattern(2,x2,y2,p2); // show on GUI
+        boolean overlap = true;
+        int r2 = 0;
+        int c2 = 0;
+        Cell[][] p2 = new Cell[size][size];
+        while(overlap) {    // ensure no overlap with another player
+            r2 = getRandomPositionOnBoard();
+            c2 = getRandomPositionOnBoard();
+            p2 = GameSetting.instance().getPlayerChosenInitialPattern(2);
+            overlap = isOverlap(r2,c2,p2);
+        }
+        fillGameBoard(r2,c2,p2);      // local array to hold the game board status
+
+        gui.updateGameBoard(gameBoard);
     }
-    private void fillGameBoard(int x, int y, Cell[][] p) {
-        int patSize = p.length;
-        //System.out.println(patSize);
-        for (int i=x; i<x+3; i++) {
-            for (int j=y; j<y+3; j++) {
-                gameBoard[i][j] = p[i-x][j-y];
+    private void fillGameBoard(int startRow, int startCol, Cell[][] pattern) {
+        // startRow is the starting row, startCol is the starting column
+        int size = pattern.length;
+        for (int r=0; r<size; r++) {
+            for (int c=0; c<size; c++) {
+                if (pattern[r][c].getCellState().equals(CellState.ALIVE)) {
+                    gameBoard[r + startRow][c + startCol] = pattern[r][c];
+                }
             }
         }
     }
@@ -104,6 +110,10 @@ public class GameModel implements GameBoardObserver {
         int cntPlayer2 = countPopulation(2);
         gui.refreshPopulation(1,cntPlayer1);
         gui.refreshPopulation(2,cntPlayer2);
+    }
+    private void updatePlayerGeneration(GUIGameBoard gui) {
+        GameSetting.instance().increasePlayerGeneration(playerTurn);
+        gui.refreshPlayerGeneration(playerTurn);
     }
     private void switchPlayerTurn() {
         playerTurn++;
@@ -115,13 +125,13 @@ public class GameModel implements GameBoardObserver {
         gui.refreshPlayerTurn();
         System.out.println("Switching to player "+playerTurn);
     }
-    private boolean isOverlap(int x, int y, Cell[][] p) {
+    private boolean isOverlap(int row, int col, Cell[][] p) {
         int patSize = p.length;
         //System.out.println(patSize);
-        for (int i=x; i<x+3; i++) {
-            for (int j=y; j<y+3; j++) {
+        for (int i=row; i<row+patSize; i++) {
+            for (int j=col; j<col+patSize; j++) {
                 if (gameBoard[i][j].getCellState().equals(CellState.ALIVE)) {
-                    if (p[i-x][j-y].getCellState().equals(CellState.ALIVE)) {
+                    if (p[i-row][j-col].getCellState().equals(CellState.ALIVE)) {
                         return true;
                     }
                 }
@@ -130,9 +140,9 @@ public class GameModel implements GameBoardObserver {
         return false;
     }
     @Override
-    public void cellSelected(int x, int y, String action) {
+    public void cellSelected(int row, int col, String action) {
         // check if the grid cell belong to which player <8>.<e>
-        printStatistics(x,y,action);
+        printStatistics(row,col,action);
 
         if (gameOver) {
             if (winner==0) {
@@ -140,54 +150,53 @@ public class GameModel implements GameBoardObserver {
             } else {
                 showAlertMessage("Game Over","Winner is "+GameSetting.instance().getPlayerName(winner));
             }
-            //checkForGameOver();  // it gives the correct display message
             return;
         }
 
         Ownership player = Ownership.valueOf("PLAYER"+playerTurn);
 
         if (action.equals("ALIVE") && !livePlayed) {
-            if (isSpringToLive(player,x,y)) {
+            if (isSpringToLive(player,row,col)) {
                 livePlayed = true;
-                updateSpringToLive(playerTurn,x,y);
+                updateSpringToLive(playerTurn,row,col);
                 updatePlayerPopulation();
                 if (livePlayed && deadPlayed) {
                     switchPlayerTurn();
                     checkForGameOver();
                 }
             } else {
-                String title = "Cell["+x+","+y+"] can't be sprung into LIFE!";
+                String title = "Cell[r="+row+", c"+col+"] can't be sprung into LIFE!";
                 showAlertMessage("Invalid Move", title);
                 return;
             }
         } else if (action.equals("KILL") && !deadPlayed) {
-            if (isOpponentOfPlayerKillable(player,x,y)) {
+            if (isOpponentOfPlayerKillable(player,row,col)) {
                 deadPlayed = true;
-                updateGameBoardCell(x,y,Ownership.NONE,CellState.DEAD);
+                updateGameBoardCell(row,col,Ownership.NONE,CellState.DEAD);
                 updatePlayerPopulation();
                 if (livePlayed && deadPlayed) {
                     switchPlayerTurn();
                     checkForGameOver();
                 }
             } else {
-                String title = "Cell["+x+","+y+"] can't be KILL!";
+                String title = "Cell[r="+row+", c="+col+"] can't be KILL!";
                 showAlertMessage("Invalid Move", title);
                 return;
             }
         }
 
-        printStatistics(x,y,action);
+        printStatistics(row,col,action);
     }
-    private void updateGameBoardCell(int x, int y, Ownership owner, CellState cellState) {
-        gameBoard[x][y].setCellOwner(owner);
-        gameBoard[x][y].setCellState(cellState);
-        gui.refreshEmptyCellUpdateOnGameBoard(x,y);
+    private void updateGameBoardCell(int r, int c, Ownership owner, CellState cellState) {
+        gameBoard[r][c].setCellOwner(owner);
+        gameBoard[r][c].setCellState(cellState);
+        gui.refreshEmptyCellUpdateOnGameBoard(r,c);
     }
-    private void updateSpringToLive(int playerNo, int x, int y) {
+    private void updateSpringToLive(int playerNo, int r, int c) {
         Ownership owner = Ownership.valueOf("PLAYER"+playerNo);
-        gameBoard[x][y].setCellOwner(owner);
-        gameBoard[x][y].setCellState(CellState.ALIVE);
-        gui.refreshSpringToLiveOnGameBoard(playerNo,x,y);
+        gameBoard[r][c].setCellOwner(owner);
+        gameBoard[r][c].setCellState(CellState.ALIVE);
+        gui.refreshSpringToLiveOnGameBoard(playerNo,r,c);
     }
     private void showAlertMessage(String strTitle, String strMsg) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -196,43 +205,43 @@ public class GameModel implements GameBoardObserver {
         alert.setContentText(strMsg);
         alert.showAndWait();
     }
-    private boolean isSpringToLive(Ownership player, int x, int y) {
-        if (!gameBoard[x][y].getCellOwner().equals(Ownership.NONE)) { return false; }
-        int[] neighbors = getNeighborCount(x,y);
+    private boolean isSpringToLive(Ownership player, int r, int c) {
+        if (!gameBoard[r][c].getCellOwner().equals(Ownership.NONE)) { return false; }
+        int[] neighbors = getNeighborCount(r,c);
         if (neighbors[player.ordinal()]==3) { return true; }
         return false;
     }
-    private boolean isOpponentOfPlayerKillable(Ownership player, int x, int y) {
+    private boolean isOpponentOfPlayerKillable(Ownership player, int r, int c) {
         // check if player opponent is killable
-        Ownership xyOwner = gameBoard[x][y].getCellOwner();
+        Ownership xyOwner = gameBoard[r][c].getCellOwner();
         if (xyOwner.equals(Ownership.NONE) || xyOwner.equals(player)) { return false; }
-        int[] neighbors = getNeighborCount(x,y);
+        int[] neighbors = getNeighborCount(r,c);
         Ownership opponent = getOpponentOf(player);
-        //System.out.println("player "+player.ordinal());
-        //System.out.println("opponent "+opponent.ordinal());
         if (neighbors[opponent.ordinal()]<2) { return true; }
         if (neighbors[opponent.ordinal()]>3) { return true; }
         return false;
     }
-    private Ownership getOpponentOf(Ownership owner) {
-        if (owner.equals(Ownership.PLAYER1)) { return Ownership.PLAYER2; }
+    private Ownership getOpponentOf(Ownership player) {
+        if (player.equals(Ownership.PLAYER1)) { return Ownership.PLAYER2; }
         return Ownership.PLAYER1;
     }
     private int countPopulation(int playerNo) {
         int gbSize = GameSetting.instance().getGridSize();
         Ownership player = Ownership.valueOf("PLAYER"+playerNo);
         int popCount = 0;
-        for (int i=0; i<gbSize; i++) {
-            for (int j = 0; j < gbSize; j++) {
-                if (gameBoard[i][j].getCellOwner().equals(player)) { popCount++; }
+        for (int r=0; r<gbSize; r++) {
+            for (int c=0; c<gbSize; c++) {
+                if (gameBoard[r][c].getCellOwner().equals(player)) { popCount++; }
             }
         }
         return popCount;
     }
 
     private int getRandomPositionOnBoard() {
+        // since the dimension of the board are rectangle, hence same module is used to get row/col
         Random rnd = new Random();
-        return rnd.nextInt(GameSetting.instance().getGridSize()-2);
+        int size = GameSetting.instance().getMaxCellSelection();
+        return rnd.nextInt(GameSetting.instance().getGridSize()-size+1);
     }
     private void checkForGameOver() {
         /*
@@ -257,31 +266,6 @@ public class GameModel implements GameBoardObserver {
             showAlertMessage("Game Over",declaredWinner);
         }
     }
-    //    private void checkForGameOver() {
-//        /*
-//        *
-//        * */
-//        boolean player1KO = isPlayerKO(1);
-//        boolean player2KO = isPlayerKO(2);
-//        gameOver = player1KO && player2KO;
-//        if (playerTurn==1 && player1KO) { gameOver = true; }
-//        if (playerTurn==2 && player2KO) { gameOver = true; }
-//        if (gameOver) {
-//            int cntPlayer1 = countPopulation(1);
-//            int cntPlayer2 = countPopulation(2);
-//            if (cntPlayer1>cntPlayer2) {
-//                winner = 1;
-//                showAlertMessage("Game Over","Winner is "+GameSetting.instance().getPlayerName(winner));
-//            } else if (cntPlayer1<cntPlayer2) {
-//                winner = 2;
-//                showAlertMessage("Game Over","Winner is "+GameSetting.instance().getPlayerName(winner));
-//            } else {
-//                winner = 0;
-//                showAlertMessage("Game Over","No Winner");
-//            }
-//        }
-//        System.out.println("Game Over: "+gameOver);
-//    }
     private boolean isPlayerUnableToMove(int playerNo) {
         // must be able to live and kill opponent
         boolean canLive = false;
@@ -293,13 +277,14 @@ public class GameModel implements GameBoardObserver {
         return !(canLive && canKill);
     }
     private boolean isPlayerLivable(int playerNo) {
+        // player surrounded by 3 neighbors of same player color
         Ownership player = Ownership.valueOf("PLAYER"+playerNo);
         int gbSize = GameSetting.instance().getGridSize();
-        for (int i=0; i<gbSize; i++) {
-            for (int j=0; j<gbSize; j++) {
-                int[] neighbors = getNeighborCount(i,j);
-                Ownership cij = gameBoard[i][j].getCellOwner();
-                if (cij.equals(Ownership.NONE)) {
+        for (int r=0; r<gbSize; r++) {
+            for (int c=0; c<gbSize; c++) {
+                int[] neighbors = getNeighborCount(r,c);
+                Ownership crc = gameBoard[r][c].getCellOwner();
+                if (crc.equals(Ownership.NONE)) {
                     if (neighbors[playerNo]==3) { return true; }
                 }
             }
@@ -307,15 +292,15 @@ public class GameModel implements GameBoardObserver {
         return false;
     }
     private boolean isKillable(int playerNo) {
-        // is playerNo can be killed?
+        // is playerNo can be killed by opponent?
         int gbSize = GameSetting.instance().getGridSize();
         Ownership player = Ownership.valueOf("PLAYER"+playerNo);
         //Ownership opponent = getOpponentOf(player);
-        for (int i=0; i<gbSize; i++) {
-            for (int j=0; j<gbSize; j++) {
-                int[] neighbors = getNeighborCount(i,j);
-                Ownership cij = gameBoard[i][j].getCellOwner();
-                if (cij.equals(player)) {
+        for (int r=0; r<gbSize; r++) {
+            for (int c=0; c<gbSize; c++) {
+                int[] neighbors = getNeighborCount(r,c);
+                Ownership crc = gameBoard[r][c].getCellOwner();
+                if (crc.equals(player)) {
                     if (neighbors[player.ordinal()]<2) { return true; }
                     if (neighbors[player.ordinal()]>3) { return true; }
                 }
@@ -332,35 +317,35 @@ public class GameModel implements GameBoardObserver {
      *                              3rd element is count of PLAYER2
      *  Note: the grid at (x,y) is not counted
      *  */
-    private int[] getNeighborCount(int x, int y) {
+    private int[] getNeighborCount(int row, int col) {
         int[] owners = {0,0,0};
         int gbSize = GameSetting.instance().getGridSize();
-        int leftX = x - 1;
-        if (leftX<0) { leftX = x; }
-        int rightX = x + 1;
-        if (rightX >= gbSize) { rightX = x; }
-        int topY = y - 1;
-        if (topY<0) { topY = y; }
-        int bottomY = y + 1;
-        if (bottomY >= gbSize) { bottomY = y; }
+        int topRow = row - 1;
+        if (topRow<0) { topRow = row; }
+        int bottomRow = row + 1;
+        if (bottomRow >= gbSize) { bottomRow = row; }
+        int leftCol = col - 1;
+        if (leftCol<0) { leftCol = col; }
+        int rightCol = col + 1;
+        if (rightCol >= gbSize) { rightCol = col; }
 
-        for (int i=leftX; i<rightX+1; i++) {
-            for (int j=topY; j<bottomY+1; j++) {
-                if (i==x && j==y) continue; // skip center cell check
-                if (gameBoard[i][j].getCellOwner().equals(Ownership.NONE)) {
+        for (int r=topRow; r<bottomRow+1; r++) {
+            for (int c = leftCol; c < rightCol + 1; c++) {
+                if (r == row && c == col) continue; // skip center cell check
+                if (gameBoard[r][c].getCellOwner().equals(Ownership.NONE)) {
                     owners[0]++;
-                } else if (gameBoard[i][j].getCellOwner().equals(Ownership.PLAYER1)) {
+                } else if (gameBoard[r][c].getCellOwner().equals(Ownership.PLAYER1)) {
                     owners[1]++;
                 } else {
                     owners[2]++;    //PLAYER2
                 }
             }
         }
-        String s = String.valueOf(owners[0])+","+ String.valueOf(owners[1])+","+String.valueOf(owners[2]);
+        //String s = String.valueOf(owners[0])+","+ String.valueOf(owners[1])+","+String.valueOf(owners[2]);
         //System.out.println(s);
         return owners;
     }
-    private void printStatistics(int x, int y, String action) {
+    private void printStatistics(int r, int c, String action) {
         System.out.println("-------------------------------------------");
         System.out.println("Current Player No: "+playerTurn);
         System.out.println("Current Player Name: "+GameSetting.instance().getPlayerName(playerTurn));
@@ -368,8 +353,8 @@ public class GameModel implements GameBoardObserver {
         System.out.println("Current Live action: "+ livePlayed);
         System.out.println("Current Dead action: "+ deadPlayed);
 
-        System.out.println(action+" ("+x+", "+y+")");
-        int[] a = getNeighborCount(x,y);
+        System.out.println(action+" (r="+r+", c="+c+")");
+        int[] a = getNeighborCount(r,c);
         String s = "";
         for (int i=0; i<3; i++) {
             s += a[i]+", ";

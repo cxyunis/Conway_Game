@@ -17,17 +17,17 @@ import java.util.List;
 import static java.lang.Math.max;
 
 
-public class GUIBased extends Application {
+public class GUIGameBoard extends Application {
 
     //Rectangle[][] rect;
-    private static int gSize = 20;  // grid (individual cell) = width = height
+    private static final int GRID_SIZE = 20;  // grid (individual cell) = width = height
     private static final int LPAD = 20;
     private static final int RPAD = 20;
     private static final int TPAD = 140;
     private static final int BPAD = 20;
     private Label[] lblGeneration = new Label[2];
-    private Label[] lblPName = new Label[2];
-    private Circle[] crcPColor = new Circle[2];
+    private Label[] lblPlayerName = new Label[2];
+    private Circle[] crcPlayerColor = new Circle[2];
     private Label[] lblPopulation = new Label[2];
 
     private  Rectangle[][] grids;
@@ -39,17 +39,14 @@ public class GUIBased extends Application {
         Scene scene = createScene();
         stage.setScene(scene);
         stage.show();
-        rearrangeNodes(lblPName,crcPColor,lblGeneration,lblPopulation);
+        rearrangeNodes();
     }
     public void registerObserver(GameBoardObserver pObserver) {
         aObservers.add(pObserver);
     }
-    public void removeObserver(GameBoardObserver pObserver) {
-        aObservers.remove(pObserver);
-    }
-    void observedCellSelected(int x, int y, String action) {
+    private void observedCellSelected(int row, int col, String action) {
         for(GameBoardObserver observer : aObservers) {
-            observer.cellSelected(x,y,action);
+            observer.cellSelected(row,col,action);
         }
     }
     public void refreshPlayerGeneration(int playerNo) {
@@ -64,22 +61,28 @@ public class GUIBased extends Application {
         lblPlayerTurn.setText("It is "+GameSetting.instance().getPlayerName(playerTurn)+"'s turn");
         lblPlayerTurn.setTextFill(GameSetting.instance().getPlayerColor(playerTurn));
     }
-    public void showInitialPattern(int playerNo, int startPosX, int startPosY, Cell[][] cells) {
-        // call from outsider to set initial pattern on board
-        Color c = GameSetting.instance().getPlayerColor(playerNo);
-        for (int i=0; i<3; i++) {
-            for (int j=0; j<3; j++) {
-                if (cells[i][j].getCellState().equals(CellState.ALIVE)) {
-                    grids[startPosX + i][startPosY + j].setFill(c);
+
+    public void updateGameBoard(Cell[][] cells) {
+        int size = GameSetting.instance().getGridSize();
+        Color p1Color = GameSetting.instance().getPlayerColor(1);
+        Color p2Color = GameSetting.instance().getPlayerColor(2);
+        for (int r=0; r<size; r++) {
+            for (int c=0; c<size; c++) {
+                if (cells[r][c].getCellState().equals(CellState.ALIVE)) {
+                    if (cells[r][c].getCellOwner().equals(Ownership.PLAYER1)) {
+                        grids[r][c].setFill(p1Color);
+                    } else {
+                        grids[r][c].setFill(p2Color);
+                    }
                 }
             }
         }
     }
-    public void refreshEmptyCellUpdateOnGameBoard(int x, int y) {
-        grids[x][y].setFill(GameSetting.instance().getBoardColor());
+    public void refreshEmptyCellUpdateOnGameBoard(int r, int c) {
+        grids[r][c].setFill(GameSetting.instance().getBoardColor());
     }
-    public void refreshSpringToLiveOnGameBoard(int playerNo, int x, int y) {
-        grids[x][y].setFill(GameSetting.instance().getPlayerColor(playerNo));
+    public void refreshSpringToLiveOnGameBoard(int playerNo, int r, int c) {
+        grids[r][c].setFill(GameSetting.instance().getPlayerColor(playerNo));
     }
     public void refreshPopulation(int playerNo, int population) {
         lblPopulation[playerNo-1].setText("Population: "+population);
@@ -89,19 +92,19 @@ public class GUIBased extends Application {
 
         grids = createGrid();
         int noOfGrid = GameSetting.instance().getGridSize();    //note that this GridSize != gSize
-        for (int i=0; i<noOfGrid; i++) {
-            for (int j=0; j<noOfGrid; j++) {
-                root.getChildren().addAll(grids[i][j]);
+        for (int r=0; r<noOfGrid; r++) {
+            for (int c=0; c<noOfGrid; c++) {
+                root.getChildren().addAll(grids[r][c]);
             }
         }
 
         for (int i=0; i<2; i++) {
-            lblPName[i] = constructPlayerNameLabel(i+1,0,i*40,10);
-            crcPColor[i] = new Circle(80,i*40+20,10,GameSetting.instance().getPlayerColor(i+1));
+            lblPlayerName[i] = constructPlayerNameLabel(i+1,0,i*40,10);
+            crcPlayerColor[i] = new Circle(80,i*40+20,10,GameSetting.instance().getPlayerColor(i+1));
             lblGeneration[i] = constructGenerationLabel(i+1,110,i*40,10);
             lblPopulation[i] = constructPopulationLabel(i+1,160,i*40,10);
 
-            root.getChildren().addAll(lblPName[i],crcPColor[i],lblGeneration[i],lblPopulation[i]);
+            root.getChildren().addAll(lblPlayerName[i], crcPlayerColor[i],lblGeneration[i],lblPopulation[i]);
         }
         Label note = constructMouseClickNote(0,80,10);
         lblPlayerTurn = constructPlayerTurnLabel(1,0,120,10);
@@ -109,32 +112,25 @@ public class GUIBased extends Application {
 
 
         // noOfGrid*gSize gives total length of grid w/o gap, and 2nd gSize
-        int windowWidth = LPAD+noOfGrid*gSize+gSize-1+RPAD;
-        int windowHeight = 10+TPAD+noOfGrid*gSize+gSize-1+BPAD+30;
+        int windowWidth = LPAD+noOfGrid* GRID_SIZE + GRID_SIZE -1+RPAD;
+        int windowHeight = 10+TPAD+noOfGrid* GRID_SIZE + GRID_SIZE -1+BPAD+30;
         Scene scene = new Scene(root, windowWidth, windowHeight, Color.LIGHTYELLOW);
         return scene;
     }
-    private void rearrangeNodes(Label[] lPN, Circle[] cPC, Label[] lGen, Label[] lPop) {
-        double wPN1 = lPN[0].getWidth();
-        //System.out.println(wPN1);
-        double wPN2 = lPN[1].getWidth();
-        //System.out.println(wPN2);
+    private void rearrangeNodes() {
+        double wPN1 = lblPlayerName[0].getWidth();
+        double wPN2 = lblPlayerName[1].getWidth();
         double maxWPN = max(wPN1,wPN2);
-        //System.out.println(maxWPN);
-        double wPC1 = cPC[0].getRadius();
-        cPC[0].setCenterX(maxWPN+wPC1);
-        //System.out.println(maxWPN+wPC1);
-        double wPC2 = cPC[1].getRadius();
-        cPC[1].setCenterX(maxWPN+wPC2);
-        //System.out.println(maxWPN+wPC2);
-        double wGen1 = lGen[0].getWidth();
-        lGen[0].setLayoutX(maxWPN+2*wPC1);
-        //System.out.println(maxWPN+2*wPC1);
-        double wGen2 = lGen[1].getWidth();
-        lGen[1].setLayoutX(maxWPN+2*wPC2);
-        //System.out.println(maxWPN+2*wPC2);
-        lPop[0].setLayoutX(maxWPN+2*wPC1+wGen1);
-        lPop[1].setLayoutX(maxWPN+2*wPC2+wGen2);
+        double wPC1 = crcPlayerColor[0].getRadius();
+        crcPlayerColor[0].setCenterX(maxWPN+wPC1);
+        double wPC2 = crcPlayerColor[1].getRadius();
+        crcPlayerColor[1].setCenterX(maxWPN+wPC2);
+        double wGen1 = lblGeneration[0].getWidth();
+        lblGeneration[0].setLayoutX(maxWPN+2*wPC1);
+        double wGen2 = lblGeneration[1].getWidth();
+        lblGeneration[1].setLayoutX(maxWPN+2*wPC2);
+        lblPopulation[0].setLayoutX(maxWPN+2*wPC1+wGen1);
+        lblPopulation[1].setLayoutX(maxWPN+2*wPC2+wGen2);
     }
     private Label constructPopulationLabel(int playerNo,int x,int y,int padding) {
         String s = "Population: 0";
@@ -175,38 +171,38 @@ public class GUIBased extends Application {
         lblPlayerName.setPadding(new Insets(padding,padding,padding,padding));
         return lblPlayerName;
     }
-    private double getCellXIndex(double x) { return ((x-LPAD)/(gSize+1)); }
-    private int getCellX(int index) { return index+LPAD+index*gSize; }
-    private double getCellYIndex(double y) { return ((y-TPAD-30)/(gSize+1)); }
-    private int getCellY(int index) { return index+30+TPAD+index*gSize; }
+    private double getCellXIndex(double x) { return ((x-LPAD)/(GRID_SIZE +1)); }
+    private int getCellX(int index) { return index+LPAD+index* GRID_SIZE; }
+    private double getCellYIndex(double y) { return ((y-TPAD-30)/(GRID_SIZE +1)); }
+    private int getCellY(int index) { return index+30+TPAD+index* GRID_SIZE; }
 
     private Rectangle[][] createGrid() {
         int noOfGrid = GameSetting.instance().getGridSize();
         //Rectangle[][] rect;
         Rectangle[][] rect = new Rectangle[noOfGrid][noOfGrid];
-        for (int i=0; i<noOfGrid; i++) {
-            for (int j=0; j<noOfGrid; j++) {
-                rect[i][j] = new Rectangle();            //instantiating Rectangle
-                rect[i][j].setX(getCellX(i));        //set X coordinate of upper left corner of rectangle
-                rect[i][j].setY(getCellY(j));     //set Y coordinate of upper left corner of rectangle
-                rect[i][j].setWidth(gSize);              //set the width of rectangle
-                rect[i][j].setHeight(gSize);             //set the height of rectangle
-                rect[i][j].setFill(GameSetting.instance().getBoardColor());
-                rect[i][j].setOnMouseClicked(new EventHandler<MouseEvent>()
+        for (int r=0; r<noOfGrid; r++) {
+            for (int c=0; c<noOfGrid; c++) {
+                rect[r][c] = new Rectangle();            //instantiating Rectangle
+                rect[r][c].setX(getCellX(c));            //set X coordinate of upper left corner of rectangle
+                rect[r][c].setY(getCellY(r));            //set Y coordinate of upper left corner of rectangle
+                rect[r][c].setWidth(GRID_SIZE);              //set the width of rectangle
+                rect[r][c].setHeight(GRID_SIZE);             //set the height of rectangle
+                rect[r][c].setFill(GameSetting.instance().getBoardColor());
+                rect[r][c].setOnMouseClicked(new EventHandler<MouseEvent>()
                 {
                     @Override
                     public void handle(MouseEvent e) {
                         Rectangle lRect = (Rectangle) e.getSource();
                         double x = lRect.getX();
                         double y = lRect.getY();
-                        int i = (int) getCellXIndex(x);
-                        int j = (int) getCellYIndex(y);
+                        int r = (int) getCellYIndex(y);
+                        int c = (int) getCellXIndex(x);
 
                         MouseButton btn = e.getButton();
                         if (btn==MouseButton.PRIMARY) {
-                            observedCellSelected(i,j,"ALIVE");      // <7>.<e> inform Observer about which cell is selected
+                            observedCellSelected(r,c,"ALIVE");      // <7>.<e> inform Observer about which cell is selected
                         } else if (btn==MouseButton.SECONDARY) {
-                            observedCellSelected(i,j,"KILL");      // <7>.<e> inform Observer about which cell is selected
+                            observedCellSelected(r,c,"KILL");      // <7>.<e> inform Observer about which cell is selected
                         }
                     }
                 });
