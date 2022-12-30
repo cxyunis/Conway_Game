@@ -10,23 +10,26 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class ColorPalette extends Application {
     /*
      * Show Color Palette for player to choose color to represent them on the game board
      * */
     private int playerNo = 0;
-    private Button outsideBtnOK;
-    public ColorPalette(int playerNo, Button btnOK) {
+    private List<ColorPaletteObserver> aObservers = new ArrayList<>();
+    public ColorPalette(int playerNo) {
         this.playerNo = playerNo;
-        this.outsideBtnOK = btnOK;
     }
-
+    public void registerObserver(ColorPaletteObserver pObserver) { aObservers.add(pObserver); }
     @Override
     public void start(Stage stage) throws Exception {
         final int radius = 25;
 
-        Label lblSelectedColor = new Label("CYAN");
-        lblSelectedColor.setTextFill(Color.CYAN);
+        CellColor c = CellColor.getCellColor(GameSetting.instance().getPlayerColor(playerNo));
+        Label lblSelectedColor = new Label(c.name());
+        lblSelectedColor.setTextFill(c.getColor());
         CellColor[] cellColors = CellColor.values();
         int k = 0;
         int padding = 5;
@@ -51,7 +54,7 @@ public class ColorPalette extends Application {
                         Color sc = (Color) circle.getFill();
                         lblSelectedColor.setTextFill(sc);
                         lblSelectedColor.setText(circle.getAccessibleText());
-                        outsideBtnOK.setTextFill(sc);
+                        //colorPreferenceChange(sc);  // notify observer
                     }
                 });
                 root.getChildren().addAll(crc[i][j]);
@@ -65,7 +68,7 @@ public class ColorPalette extends Application {
         btnOK.setOnAction(e -> {
             String clr = lblSelectedColor.getText();
             CellColor cc = CellColor.valueOf(clr);
-            GameSetting.instance().setPlayerChosenColor(playerNo, cc);
+            colorPreferenceChange(cc.getColor());   // notify observer of color change
             stage.close();
         });
         root.getChildren().addAll((Node) btnOK);
@@ -77,5 +80,10 @@ public class ColorPalette extends Application {
         Scene scene = new Scene(root,x,y);
         stage.setScene(scene);
         stage.show();
+    }
+    private void colorPreferenceChange(Color pColor) {
+        for(ColorPaletteObserver observer : aObservers) {
+            observer.colorChange(playerNo, pColor);     // call observer about the change in color
+        }
     }
 }

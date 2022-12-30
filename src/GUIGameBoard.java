@@ -29,7 +29,6 @@ public class GUIGameBoard extends Application {
     private Label[] lblPlayerName = new Label[2];
     private Circle[] crcPlayerColor = new Circle[2];
     private Label[] lblPopulation = new Label[2];
-
     private  Rectangle[][] grids;
     private Label lblPlayerTurn; // = new Label();
     private List<GameBoardObserver> aObservers = new ArrayList<>();
@@ -57,11 +56,9 @@ public class GUIGameBoard extends Application {
     }
     public void refreshPlayerTurn() {
         int playerTurn = GameSetting.instance().getPlayerTurn();
-        System.out.println("refreshPlayerTurn: "+playerTurn);
         lblPlayerTurn.setText("It is "+GameSetting.instance().getPlayerName(playerTurn)+"'s turn");
         lblPlayerTurn.setTextFill(GameSetting.instance().getPlayerColor(playerTurn));
     }
-
     public void updateGameBoard(Cell[][] cells) {
         int size = GameSetting.instance().getGridSize();
         Color p1Color = GameSetting.instance().getPlayerColor(1);
@@ -175,7 +172,6 @@ public class GUIGameBoard extends Application {
     private int getCellX(int index) { return index+LPAD+index* GRID_SIZE; }
     private double getCellYIndex(double y) { return ((y-TPAD-30)/(GRID_SIZE +1)); }
     private int getCellY(int index) { return index+30+TPAD+index* GRID_SIZE; }
-
     private Rectangle[][] createGrid() {
         int noOfGrid = GameSetting.instance().getGridSize();
         //Rectangle[][] rect;

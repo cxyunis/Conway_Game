@@ -23,29 +23,12 @@ public class GameModel implements GameBoardObserver {
     private boolean gameOver = false;
     private int winner = 0;
     public static void main(String[] args) {
-        Application.launch(StartingWindow.class, args);
+        Application.launch(GameSettingWindow.class, args);
     }
     public GameModel() {
-        // sort player to decide who start first
-        sortPlayerInAlphabeticalOrder();    //<4>
-        GameSetting.instance().increasePlayerGeneration(1); // after initial patterns filled
-        GameSetting.instance().increasePlayerGeneration(2); // after initial patterns filled
+        // sort player name in alphabetical order
+        sortPlayerInAlphabeticalOrder();
     }
-    private void sortPlayerInAlphabeticalOrder() {
-        // to meet game requirement that the game controller to sort the player according to alphabetical order
-        // once sorted, the starting player in GameSetting will change according to alphabetical order, including
-        // their settings will be reassigned accordingly
-        String p1name = GameSetting.instance().getPlayerName(1);
-
-        List<String> user = new ArrayList<>(2);
-        user.add(new String(GameSetting.instance().getPlayerName(1)));
-        user.add(new String(GameSetting.instance().getPlayerName(2)));
-        Collections.sort(user);
-        if (!p1name.equals(user.get(0))) {
-            GameSetting.instance().swapPlayerPlayingOrder();
-        }
-    }
-
     public void startGame() {
         // call back from SettingWindow after players selected the preference
         if (GameSetting.instance().getPlatform().equals("GUI")) {
@@ -54,14 +37,81 @@ public class GameModel implements GameBoardObserver {
             gui.registerObserver(this);
             gui.start(stage);   //<e>.<6>
 
-            initializeGameBoard();  // initialize game board (MAY NEED TO CHANGE TO GAMEBOARD class
+            initializeGameBoard();  // initialize game board
             setInitialPattern();    // fill with initial pattern to start the game with
+            for (int pn=1; pn<3; pn++) {
+                playerTurn = pn;
+                updatePlayerGeneration(gui);
+            }
+            playerTurn = 1;
             updatePlayerPopulation();
             updatePlayerGeneration(gui);
             checkForGameOver();
         } else {
             TerminalGameBoard tbGame = new TerminalGameBoard();
             tbGame.start();
+        }
+    }
+    @Override
+    public void cellSelected(int row, int col, String action) {
+        // check if the grid cell belong to which player <8>.<e>
+        //printStatistics(row,col,action);
+
+        if (gameOver) {
+            if (winner==0) {
+                showAlertMessage("Game Over","No Winner");
+            } else {
+                showAlertMessage("Game Over","Winner is "+GameSetting.instance().getPlayerName(winner));
+            }
+            return;
+        }
+
+        Ownership player = Ownership.valueOf("PLAYER"+playerTurn);
+
+        if (action.equals("ALIVE") && !livePlayed) {
+            if (isSpringToLive(player,row,col)) {
+                livePlayed = true;
+                updateSpringToLive(playerTurn,row,col);
+                updatePlayerPopulation();
+                if (livePlayed && deadPlayed) {
+                    switchPlayerTurn();
+                    checkForGameOver();
+                }
+            } else {
+                String title = "Cell[r="+row+", c"+col+"] can't be sprung into LIFE!";
+                showAlertMessage("Invalid Move", title);
+                return;
+            }
+        } else if (action.equals("KILL") && !deadPlayed) {
+            if (isOpponentOfPlayerKillable(player,row,col)) {
+                deadPlayed = true;
+                updateGameBoardCell(row,col,Ownership.NONE,CellState.DEAD);
+                updatePlayerPopulation();
+                if (livePlayed && deadPlayed) {
+                    switchPlayerTurn();
+                    checkForGameOver();
+                }
+            } else {
+                String title = "Cell[r="+row+", c="+col+"] can't be KILL!";
+                showAlertMessage("Invalid Move", title);
+                return;
+            }
+        }
+
+        //printStatistics(row,col,action);
+    }
+    private void sortPlayerInAlphabeticalOrder() {
+        // to meet game requirement that the game controller to sort the player according to alphabetical order
+        // once sorted, the starting player in GameSetting will change according to alphabetical order, including
+        // their settings will be reassigned accordingly
+        String p1name = GameSetting.instance().getPlayerName(1);
+
+        List<String> player = new ArrayList<>(2);
+        player.add(new String(GameSetting.instance().getPlayerName(1)));
+        player.add(new String(GameSetting.instance().getPlayerName(2)));
+        Collections.sort(player);
+        if (!p1name.equals(player.get(0))) {
+            GameSetting.instance().swapPlayerPlayingOrder();
         }
     }
     private void initializeGameBoard() {
@@ -116,6 +166,7 @@ public class GameModel implements GameBoardObserver {
         gui.refreshPlayerGeneration(playerTurn);
     }
     private void switchPlayerTurn() {
+        // used after sorting the players name in alphabetical order
         playerTurn++;
         if (playerTurn>2) { playerTurn = 1; }
         livePlayed = false;
@@ -123,7 +174,7 @@ public class GameModel implements GameBoardObserver {
         GameSetting.instance().increasePlayerGeneration(playerTurn);
         gui.refreshPlayerGeneration(playerTurn);
         gui.refreshPlayerTurn();
-        System.out.println("Switching to player "+playerTurn);
+        //System.out.println("Switching to player "+playerTurn);
     }
     private boolean isOverlap(int row, int col, Cell[][] p) {
         int patSize = p.length;
@@ -138,54 +189,6 @@ public class GameModel implements GameBoardObserver {
             }
         }
         return false;
-    }
-    @Override
-    public void cellSelected(int row, int col, String action) {
-        // check if the grid cell belong to which player <8>.<e>
-        printStatistics(row,col,action);
-
-        if (gameOver) {
-            if (winner==0) {
-                showAlertMessage("Game Over","No Winner");
-            } else {
-                showAlertMessage("Game Over","Winner is "+GameSetting.instance().getPlayerName(winner));
-            }
-            return;
-        }
-
-        Ownership player = Ownership.valueOf("PLAYER"+playerTurn);
-
-        if (action.equals("ALIVE") && !livePlayed) {
-            if (isSpringToLive(player,row,col)) {
-                livePlayed = true;
-                updateSpringToLive(playerTurn,row,col);
-                updatePlayerPopulation();
-                if (livePlayed && deadPlayed) {
-                    switchPlayerTurn();
-                    checkForGameOver();
-                }
-            } else {
-                String title = "Cell[r="+row+", c"+col+"] can't be sprung into LIFE!";
-                showAlertMessage("Invalid Move", title);
-                return;
-            }
-        } else if (action.equals("KILL") && !deadPlayed) {
-            if (isOpponentOfPlayerKillable(player,row,col)) {
-                deadPlayed = true;
-                updateGameBoardCell(row,col,Ownership.NONE,CellState.DEAD);
-                updatePlayerPopulation();
-                if (livePlayed && deadPlayed) {
-                    switchPlayerTurn();
-                    checkForGameOver();
-                }
-            } else {
-                String title = "Cell[r="+row+", c="+col+"] can't be KILL!";
-                showAlertMessage("Invalid Move", title);
-                return;
-            }
-        }
-
-        printStatistics(row,col,action);
     }
     private void updateGameBoardCell(int r, int c, Ownership owner, CellState cellState) {
         gameBoard[r][c].setCellOwner(owner);
@@ -236,7 +239,6 @@ public class GameModel implements GameBoardObserver {
         }
         return popCount;
     }
-
     private int getRandomPositionOnBoard() {
         // since the dimension of the board are rectangle, hence same module is used to get row/col
         Random rnd = new Random();
@@ -345,21 +347,21 @@ public class GameModel implements GameBoardObserver {
         //System.out.println(s);
         return owners;
     }
-    private void printStatistics(int r, int c, String action) {
-        System.out.println("-------------------------------------------");
-        System.out.println("Current Player No: "+playerTurn);
-        System.out.println("Current Player Name: "+GameSetting.instance().getPlayerName(playerTurn));
-        System.out.println("Current Player Generation: "+GameSetting.instance().getPlayerGeneration(playerTurn));
-        System.out.println("Current Live action: "+ livePlayed);
-        System.out.println("Current Dead action: "+ deadPlayed);
-
-        System.out.println(action+" (r="+r+", c="+c+")");
-        int[] a = getNeighborCount(r,c);
-        String s = "";
-        for (int i=0; i<3; i++) {
-            s += a[i]+", ";
-        }
-        System.out.println("neighabor: "+s.strip());
-        System.out.println("===========================================");
-    }
+//    private void printStatistics(int r, int c, String action) {
+//        System.out.println("-------------------------------------------");
+//        System.out.println("Current Player No: "+playerTurn);
+//        System.out.println("Current Player Name: "+GameSetting.instance().getPlayerName(playerTurn));
+//        System.out.println("Current Player Generation: "+GameSetting.instance().getPlayerGeneration(playerTurn));
+//        System.out.println("Current Live action: "+ livePlayed);
+//        System.out.println("Current Dead action: "+ deadPlayed);
+//
+//        System.out.println(action+" (r="+r+", c="+c+")");
+//        int[] a = getNeighborCount(r,c);
+//        String s = "";
+//        for (int i=0; i<3; i++) {
+//            s += a[i]+", ";
+//        }
+//        System.out.println("neighabor: "+s.strip());
+//        System.out.println("===========================================");
+//    }
 }

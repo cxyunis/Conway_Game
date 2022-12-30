@@ -17,11 +17,9 @@ public class InitialPattern extends Application {
     private int playerNo;
     private Color playerColor;
     private int[] playerCounter = {0,0};
-    private Button outsideBtnOK;
-    public InitialPattern(int dimension, int playerNo, Button btnOK) throws Exception {
+    public InitialPattern(int dimension, int playerNo) throws Exception {
         this.dimension = dimension;
         this.playerNo = playerNo;
-        this.outsideBtnOK = btnOK;
         this.playerColor = GameSetting.instance().getPlayerColor(playerNo);
     }
     @Override
@@ -29,6 +27,7 @@ public class InitialPattern extends Application {
         stage.initStyle(StageStyle.UTILITY);
         stage.setTitle("Initial Pattern Maker");
         Rectangle grids[][] = new Rectangle[dimension][dimension];
+        int maxNoOfCell = GameSetting.instance().getMaxCellSelection();
 
         Group root = new Group();
         Color boardColor = Color.LIGHTPINK;
@@ -52,7 +51,7 @@ public class InitialPattern extends Application {
                         int c = (int) (x- PADDING)/21;
 
                         if (grids[r][c].getFill()==boardColor) {
-                            if (playerCounter[playerNo-1]<GameSetting.instance().getMaxCellSelection()) {
+                            if (playerCounter[playerNo-1]<maxNoOfCell) {
                                 grids[r][c].setFill(playerColor);
                                 playerCounter[playerNo-1]++;
                             }
@@ -64,10 +63,10 @@ public class InitialPattern extends Application {
                 });
             }
         }
-        Label note = new Label("Choose at most "+GameSetting.instance().getMaxCellSelection()+" cells");
+        Label note = new Label("Choose at most "+maxNoOfCell+" cells");
         note.setTextFill(Color.RED);
         note.setPadding(new Insets(5,5,5,5));
-        note.setLayoutX(PADDING +GameSetting.instance().getMaxCellSelection()*dimension+dimension);
+        note.setLayoutX(PADDING+maxNoOfCell*dimension+dimension);
         root.getChildren().add(note);
 
         Button btnOK = new Button("OK");
@@ -82,11 +81,10 @@ public class InitialPattern extends Application {
                     }
                 }
             }
-            outsideBtnOK.setTextFill(playerColor);
-            GameSetting.instance().setPlayerChosenInitialPattern(playerNo,pattern);
+            GameSetting.instance().setPlayerChosenInitialPattern(playerNo,pattern); // probably need to implement observer pattern
             stage.close();
         });
-        GameSetting.instance().setPlayerChosenInitialPattern(playerNo,pattern);
+        //GameSetting.instance().setPlayerChosenInitialPattern(playerNo,pattern);
         btnOK.setLayoutX(PADDING +dimension*20+dimension+20+5);
         btnOK.setLayoutY(PADDING +20+2*dimension);
         root.getChildren().add(btnOK);

@@ -8,11 +8,14 @@ import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 
-public class StartingWindow extends Application {
+public class GameSettingWindow extends Application implements ColorPaletteObserver {
     /*
      * GUI based settings for the game
      * Obtained settings from players
      * */
+    private Button[] btnSelectID = new Button[2];
+    private Button[] btnSelectPlayerPattern = new Button[2];
+    private Color[] trackPreColor = new Color[2];  // for each player; to synchronize button color
     @Override
     public void start(Stage stage) {
         // deciding whether to play in GUI or terminal
@@ -22,7 +25,9 @@ public class StartingWindow extends Application {
         // call color palette for each player to choose color
         Button btnSelectID = new Button("Choose color for player "+playerNo);
         btnSelectID.setOnAction(e -> {
-            ColorPalette cp = new ColorPalette(playerNo,btnSelectID);
+            trackPreColor[playerNo-1] = (Color) btnSelectID.getTextFill();     // get color before change
+            ColorPalette cp = new ColorPalette(playerNo);
+            cp.registerObserver(this);      // call back method: colorChange
             Stage s = new Stage();
             try {
                 cp.start(s);    // start the color palette for player to choose color
@@ -38,7 +43,7 @@ public class StartingWindow extends Application {
         btnSelectPattern.setOnAction(e -> {
             try {
                 Stage s = new Stage();
-                InitialPattern initialPattern = new InitialPattern(size,playerNo,btnSelectPattern);
+                InitialPattern initialPattern = new InitialPattern(size,playerNo);
                 initialPattern.start(s);
             } catch (Exception ex) {
                 throw new RuntimeException(ex);
@@ -51,25 +56,22 @@ public class StartingWindow extends Application {
 
         String platform = GameSetting.instance().getPlatform();
 
-        // player 1
-        Label lblPlayer1Name = new Label("Player 1 Name");
-        TextField txtPlayer1Name = new TextField("Haru");   //"Enter Player 1 Name"
-        Label lblPlayer1Preference = new Label("Player 1 Preference Color/Symbol");
-        Color defaultPlayer1Color = GameSetting.instance().getPlayerColor(1);
-        Button btnSelectID1 = selectPreferColor(1);
-        btnSelectID1.setTextFill(defaultPlayer1Color);
-        Label lblPlayer1StartingPattern = new Label("Player 1 Starting Pattern");
-        Button btnSelectPlayer1Pattern = selectInitialPattern(1);
-
-        // player 2
-        Label lblPlayer2Name = new Label("Player 2 Name");
-        TextField txtPlayer2Name = new TextField("Bora");   //"Enter Player 2 Name"
-        Label lblPlayer2Preference = new Label("Player 2 Preference Color/Symbol");
-        Color defaultPlayer2Color = GameSetting.instance().getPlayerColor(2);
-        Button btnSelectID2 = selectPreferColor(2);
-        btnSelectID2.setTextFill(defaultPlayer2Color);
-        Label lblPlayer2StartingPattern = new Label("Player 2 Starting Pattern");
-        Button btnSelectPlayer2Pattern = selectInitialPattern(2);
+        Label[] lblPlayerName = new Label[2];
+        TextField[] txtPlayerName = new TextField[2];
+        Label[] lblPlayerColorPreference = new Label[2];
+        Color[] defaultPlayerColor = new Color[2];
+        Label[] lblPlayerStartingPattern = new Label[2];
+        String[] pname = {"Haru", "Bora"};
+        for (int playerNo=1; playerNo<3; playerNo++) {
+            lblPlayerName[playerNo-1] = new Label("Player "+playerNo+" Name");
+            txtPlayerName[playerNo-1] = new TextField(pname[playerNo-1]);   //"Enter Player 1 Name"
+            lblPlayerColorPreference[playerNo-1] = new Label("Player "+playerNo+" Preference Color/Symbol");
+            defaultPlayerColor[playerNo-1] = GameSetting.instance().getPlayerColor(playerNo);
+            btnSelectID[playerNo-1] = selectPreferColor(playerNo);
+            btnSelectID[playerNo-1].setTextFill(defaultPlayerColor[playerNo-1]);
+            lblPlayerStartingPattern[playerNo-1] = new Label("Player "+playerNo+" Starting Pattern");
+            btnSelectPlayerPattern[playerNo-1] = selectInitialPattern(playerNo);
+        }
 
         // grid dimension
         Label lblGridSize = new Label("Set Grid Size");
@@ -77,10 +79,9 @@ public class StartingWindow extends Application {
 
         Button btnSubmit = new Button("Submit");
         btnSubmit.setOnAction(event -> {
-            String p1name = txtPlayer1Name.getText();
-            GameSetting.instance().setPlayerName(1, p1name);    // update to game setting record
-            String p2name = txtPlayer2Name.getText();
-            GameSetting.instance().setPlayerName(2, p2name);    // update to game setting record
+            for (int pNo=1; pNo<3; pNo++) {
+                GameSetting.instance().setPlayerName(pNo, txtPlayerName[pNo-1].getText());    // update to game setting record
+            }
 
             int gbSize =  Integer.parseInt(txtGridSize.getText());
             GameSetting.instance().setGridSize(gbSize);     // update the game board dimension
@@ -97,18 +98,18 @@ public class StartingWindow extends Application {
         gridPane.setVgap(10);
         gridPane.setHgap(10);
         gridPane.setAlignment(Pos.CENTER);
-        gridPane.add(lblPlayer1Name, 0, 0);
-        gridPane.add(txtPlayer1Name, 1, 0);
-        gridPane.add(lblPlayer1Preference,0,1);
-        gridPane.add(btnSelectID1,1,1);
-        gridPane.add(lblPlayer1StartingPattern,0,2);
-        gridPane.add(btnSelectPlayer1Pattern,1,2);
-        gridPane.add(lblPlayer2Name, 0, 3);
-        gridPane.add(txtPlayer2Name, 1, 3);
-        gridPane.add(lblPlayer2Preference,0,4);
-        gridPane.add(btnSelectID2,1,4);
-        gridPane.add(lblPlayer2StartingPattern,0,5);
-        gridPane.add(btnSelectPlayer2Pattern,1,5);
+        gridPane.add(lblPlayerName[0], 0, 0);
+        gridPane.add(txtPlayerName[0], 1, 0);
+        gridPane.add(lblPlayerColorPreference[0],0,1);
+        gridPane.add(btnSelectID[0],1,1);
+        gridPane.add(lblPlayerStartingPattern[0],0,2);
+        gridPane.add(btnSelectPlayerPattern[0],1,2);
+        gridPane.add(lblPlayerName[1], 0, 3);
+        gridPane.add(txtPlayerName[1], 1, 3);
+        gridPane.add(lblPlayerColorPreference[1],0,4);
+        gridPane.add(btnSelectID[1],1,4);
+        gridPane.add(lblPlayerStartingPattern[1],0,5);
+        gridPane.add(btnSelectPlayerPattern[1],1,5);
         gridPane.add(lblGridSize, 0,6);
         gridPane.add(txtGridSize,1,6);
         gridPane.add(btnSubmit,0,7);
@@ -152,5 +153,16 @@ public class StartingWindow extends Application {
         Scene scene = new Scene(gridPane);
         stage.setScene(scene);
         stage.show();
+    }
+    @Override
+    public void colorChange(int playerNo, Color pColor) {
+        // color change due to player make changes to the color at ColorPalette
+        GameSetting.instance().setPlayerChosenColor(playerNo, pColor);
+        if (!trackPreColor[playerNo-1].equals(pColor)) {  // only when there is a change in color
+            btnSelectID[playerNo-1].setTextFill(pColor);
+            if (GameSetting.instance().isPatternFilled(playerNo)) {
+                btnSelectPlayerPattern[playerNo - 1].setTextFill(pColor);
+            }
+        }
     }
 }

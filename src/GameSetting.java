@@ -7,8 +7,9 @@ import java.util.List;
     Used Design Pattern: SINGLETON to ensure one instance only
     Initial game settings obtained from players:
     1. players name
-    2. color chosen by each players
-    3. nxn grids to be used in the game board
+    2. color chosen by each player
+    3. Initial pattern to be used in the game for each player
+    4. nxn grids to be used as the game board
  */
 public class GameSetting {
     private String[] playerName = new String[2];
@@ -18,7 +19,7 @@ public class GameSetting {
     private int[] generation = {0, 0};  // generation of each player
     private int gridSize = 20;  // game board dimension (e.g. default: 10x10)
     private String platform;    // either GUI/Terminal
-    private final int maxCellSelection = 5;
+    private final int MAX_CELLS_SELECTION = 5;
     private boolean[] trackPattern = {false, false};    // to synchronize between color button in preferred color and pattern color
     private static final GameSetting INSTANCE = new GameSetting();
     private GameSetting() {
@@ -29,8 +30,8 @@ public class GameSetting {
 
     public static GameSetting instance() { return INSTANCE; }
     public void setPlayerName(int playerNo, String name) { playerName[playerNo-1] = name; }
-    public void setPlayerChosenColor(int playerNo, CellColor pColor) {
-        playerCellColor[playerNo - 1] = pColor;
+    public void setPlayerChosenColor(int playerNo, Color pColor) {
+        playerCellColor[playerNo - 1] = CellColor.getCellColor(pColor);
     }
     public void setPlayerChosenInitialPattern(int playerNo, Cell[][] initialPattern) {
         this.initialPattern.add(playerNo-1,initialPattern);
@@ -39,7 +40,6 @@ public class GameSetting {
     public void increasePlayerGeneration(int playerNo) { generation[playerNo-1]++; }    // switch to next player too
     public void setGridSize(int size) { gridSize = size; }
     public void setPlatform(String platform) { this.platform = platform; }
-
     public void swapPlayerPlayingOrder() {
         // since there are two players only, when this method is called, it will swap players order
         swapPlayerName();
@@ -64,7 +64,7 @@ public class GameSetting {
         List<Cell[][]> initPattern = new ArrayList<>(2);
         Cell[][] player1Cell = new Cell[p2.length][p2.length];
         for (int r=0; r<p2.length; r++) {
-            for (int c=0; c<maxCellSelection; c++) {
+            for (int c = 0; c< MAX_CELLS_SELECTION; c++) {
                 if (p2[r][c].getCellState().equals(CellState.DEAD)) {
                     player1Cell[r][c] = new Cell(CellState.DEAD,Ownership.NONE);
                 } else {
@@ -76,7 +76,7 @@ public class GameSetting {
 
         Cell[][] player2Cell = new Cell[p1.length][p1.length];
         for (int r=0; r<p1.length; r++) {
-            for (int c=0; c<maxCellSelection; c++) {
+            for (int c = 0; c< MAX_CELLS_SELECTION; c++) {
                 if (p1[r][c].getCellState().equals(CellState.DEAD)) {
                     player2Cell[r][c] = new Cell(CellState.DEAD,Ownership.NONE);
                 } else {
@@ -102,5 +102,6 @@ public class GameSetting {
     public int getGridSize() { return gridSize; }
     public String getPlatform() { return platform; }
     public Color getBoardColor() { return boardColor; }
-    public int getMaxCellSelection() { return maxCellSelection; }
+    public int getMaxCellSelection() { return MAX_CELLS_SELECTION; }
+    public boolean isPatternFilled(int playerNo) { return trackPattern[playerNo-1]; }
 }
