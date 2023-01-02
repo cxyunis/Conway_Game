@@ -16,6 +16,8 @@ public class GameSettingWindow extends Application implements ColorPaletteObserv
     private Button[] btnSelectID = new Button[2];
     private Button[] btnSelectPlayerPattern = new Button[2];
     private Color[] trackPreColor = new Color[2];  // for each player; to synchronize button color
+    //    private Cell[][] playerInitPattern1 = new Cell[][];
+//    private Cell[][] playerInitPattern2 = new Cell[][];
     @Override
     public void start(Stage stage) {
         // deciding whether to play in GUI or terminal
@@ -42,6 +44,10 @@ public class GameSettingWindow extends Application implements ColorPaletteObserv
         Button btnSelectPattern = new Button("Choose Pattern for player "+playerNo);
         btnSelectPattern.setOnAction(e -> {
             try {
+                if (!GameSetting.instance().isPatternFilled(1) && playerNo==2) {
+                    showAlertMessage("Initial Pattern", "Please select initial pattern for player 1 first");
+                    return;
+                }
                 Stage s = new Stage();
                 InitialPattern initialPattern = new InitialPattern(size,playerNo);
                 initialPattern.start(s);
@@ -69,6 +75,7 @@ public class GameSettingWindow extends Application implements ColorPaletteObserv
             defaultPlayerColor[playerNo-1] = GameSetting.instance().getPlayerColor(playerNo);
             btnSelectID[playerNo-1] = selectPreferColor(playerNo);
             btnSelectID[playerNo-1].setTextFill(defaultPlayerColor[playerNo-1]);
+
             lblPlayerStartingPattern[playerNo-1] = new Label("Player "+playerNo+" Starting Pattern");
             btnSelectPlayerPattern[playerNo-1] = selectInitialPattern(playerNo);
         }
@@ -79,11 +86,38 @@ public class GameSettingWindow extends Application implements ColorPaletteObserv
 
         Button btnSubmit = new Button("Submit");
         btnSubmit.setOnAction(event -> {
+            String[] pName = new String[2];
+            pName[0] = txtPlayerName[0].getText();
+            pName[1] = txtPlayerName[1].getText();
+            if (isSameName(pName)) {
+                showAlertMessage("Player Name","Both player having same name!");
+                return;
+            }
+
+            // check init pattern selected
+            boolean pattern1set = GameSetting.instance().isPatternFilled(1);
+            boolean pattern2set = GameSetting.instance().isPatternFilled(2);
+            if (!pattern1set && !pattern2set) {
+                showAlertMessage("Initial Pattern","Player 1 & 2 Initial Patterns not set!");
+                return;
+            }
+            if (!pattern1set) {
+                showAlertMessage("Initial Pattern","Player 1 Initial Pattern not set!");
+                return;
+            }
+            if (!pattern2set) {
+                showAlertMessage("Initial Pattern","Player 2 Initial Pattern not set!");
+                return;
+            }
             for (int pNo=1; pNo<3; pNo++) {
                 GameSetting.instance().setPlayerName(pNo, txtPlayerName[pNo-1].getText());    // update to game setting record
             }
 
             int gbSize =  Integer.parseInt(txtGridSize.getText());
+            if (gbSize<10) {
+                showAlertMessage("Game Board Size","Game Board Size (Dimension) to small. Must be >= 10");
+                return;
+            }
             GameSetting.instance().setGridSize(gbSize);     // update the game board dimension
             stage.close();  // close the setting window
 
@@ -117,6 +151,18 @@ public class GameSettingWindow extends Application implements ColorPaletteObserv
         stage.setScene(scene);
         stage.show();
     }
+    private void showAlertMessage(String strTitle, String strMsg) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Alert");
+        alert.setHeaderText(strTitle);
+        alert.setContentText(strMsg);
+        alert.showAndWait();
+    }
+    private boolean isSameName(String[] playerName) {
+        if (playerName[0].equals(playerName[1])) { return true; }
+        return false;
+    }
+
     private void decidePlatform(Stage stage) {
         stage.setTitle("Ask user to play game in GUI/Terminal");
 
