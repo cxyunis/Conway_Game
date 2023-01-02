@@ -19,6 +19,15 @@ public class ColorPalette extends Application {
      * */
     private int playerNo = 0;
     private List<ColorPaletteObserver> aObservers = new ArrayList<>();
+    public List<ColorPaletteObserver> getaObservers() {
+        //This getter is only for testing
+        return aObservers;
+    }
+    public int getPlayerNo() {
+        //This getter is only for testing
+        return playerNo;
+    }
+
     public ColorPalette(int playerNo) {
         this.playerNo = playerNo;
     }

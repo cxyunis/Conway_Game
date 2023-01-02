@@ -16,8 +16,14 @@ public class GameSettingWindow extends Application implements ColorPaletteObserv
     private Button[] btnSelectID = new Button[2];
     private Button[] btnSelectPlayerPattern = new Button[2];
     private Color[] trackPreColor = new Color[2];  // for each player; to synchronize button color
-    //    private Cell[][] playerInitPattern1 = new Cell[][];
+//    private Cell[][] playerInitPattern1 = new Cell[][];
 //    private Cell[][] playerInitPattern2 = new Cell[][];
+
+    //This is for testing
+    public Button[] getBtnSelectID() {
+        return btnSelectID;
+    }
+
     @Override
     public void start(Stage stage) {
         // deciding whether to play in GUI or terminal
@@ -44,10 +50,10 @@ public class GameSettingWindow extends Application implements ColorPaletteObserv
         Button btnSelectPattern = new Button("Choose Pattern for player "+playerNo);
         btnSelectPattern.setOnAction(e -> {
             try {
-                if (!GameSetting.instance().isPatternFilled(1) && playerNo==2) {
-                    showAlertMessage("Initial Pattern", "Please select initial pattern for player 1 first");
-                    return;
-                }
+                //if (!GameSetting.instance().isPatternFilled(1) && playerNo==2) {
+                //    showAlertMessage("Initial Pattern", "Please select initial pattern for player 1 first");
+                //   return;
+                //}
                 Stage s = new Stage();
                 InitialPattern initialPattern = new InitialPattern(size,playerNo);
                 initialPattern.start(s);
