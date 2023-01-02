@@ -1,3 +1,9 @@
+package guibase;
+
+import cell.Cell;
+import cell.CellState;
+import cell.Ownership;
+import core.GameSetting;
 import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;

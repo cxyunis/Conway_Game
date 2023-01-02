@@ -1,3 +1,9 @@
+package guibase;
+
+import cell.Cell;
+import cell.CellState;
+import cell.Ownership;
+import core.GameSetting;
 import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -10,6 +16,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
+import observer.GameBoardObserver;
 
 import java.util.ArrayList;
 import java.util.List;

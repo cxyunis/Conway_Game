@@ -1,3 +1,7 @@
+package guibase;
+
+import cell.CellColor;
+import core.GameSetting;
 import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.scene.Group;
@@ -9,6 +13,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
+import observer.ColorPaletteObserver;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -1,3 +1,7 @@
+package terminalbase;
+
+import observer.*;
+
 import java.util.ArrayList;
 import java.util.List;
 

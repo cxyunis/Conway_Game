@@ -1,3 +1,9 @@
+package core;
+
+import cell.Cell;
+import cell.CellColor;
+import cell.CellState;
+import cell.Ownership;
 import javafx.scene.paint.Color;
 
 import java.util.ArrayList;
@@ -78,7 +84,7 @@ public class GameSetting {
                 if (p2[r][c].getCellState().equals(CellState.DEAD)) {
                     player1Cell[r][c] = new Cell(CellState.DEAD,Ownership.NONE);
                 } else {
-                    player1Cell[r][c] = new Cell(CellState.ALIVE,Ownership.PLAYER1);
+                    player1Cell[r][c] = new Cell(CellState.ALIVE, Ownership.PLAYER1);
                 }
             }
         }

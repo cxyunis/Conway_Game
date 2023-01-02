@@ -1,3 +1,5 @@
+package cell;
+
 /*
 *   In order to be able to use in Terminal or GUI, internal symbol will be used
 *   1. ALIVE/DEAD: use enum.ALIVE/enum.DEAD

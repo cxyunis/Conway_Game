@@ -1,3 +1,13 @@
+package core;
+
+import cell.Cell;
+import cell.CellState;
+import cell.Ownership;
+import guibase.GUIGameBoard;
+import guibase.GameSettingWindow;
+import observer.GameBoardObserver;
+import terminalbase.*;
+
 import javafx.application.Application;
 import javafx.scene.control.Alert;
 import javafx.stage.Stage;
@@ -85,7 +95,7 @@ public class GameModel implements GameBoardObserver {
         } else if (action.equals("KILL") && !deadPlayed) {
             if (isOpponentOfPlayerKillable(player,row,col)) {
                 deadPlayed = true;
-                updateGameBoardCell(row,col,Ownership.NONE,CellState.DEAD);
+                updateGameBoardCell(row,col, Ownership.NONE, CellState.DEAD);
                 updatePlayerPopulation();
                 if (livePlayed && deadPlayed) {
                     switchPlayerTurn();

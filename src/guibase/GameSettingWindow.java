@@ -1,3 +1,9 @@
+package guibase;
+
+
+
+import core.GameModel;
+import core.GameSetting;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -6,6 +12,8 @@ import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.scene.paint.Color;
 import javafx.stage.Stage;
+import observer.ColorPaletteObserver;
+import terminalbase.TerminalGameBoard;
 
 
 public class GameSettingWindow extends Application implements ColorPaletteObserver {

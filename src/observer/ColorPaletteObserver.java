@@ -1,3 +1,5 @@
+package observer;
+
 import javafx.scene.paint.Color;
 
 public interface ColorPaletteObserver {
