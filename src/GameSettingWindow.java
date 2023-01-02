@@ -73,7 +73,7 @@ public class GameSettingWindow extends Application implements ColorPaletteObserv
         Label[] lblPlayerColorPreference = new Label[2];
         Color[] defaultPlayerColor = new Color[2];
         Label[] lblPlayerStartingPattern = new Label[2];
-        String[] pname = {"Haru", "Bora"};
+        String[] pname = {"Player1", "Player2"};
         for (int playerNo=1; playerNo<3; playerNo++) {
             lblPlayerName[playerNo-1] = new Label("Player "+playerNo+" Name");
             txtPlayerName[playerNo-1] = new TextField(pname[playerNo-1]);   //"Enter Player 1 Name"
